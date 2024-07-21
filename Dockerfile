@@ -5,6 +5,8 @@
    ###################
    FROM node:18-bullseye AS builder
    ARG MB_EDITION=oss
+   # set a default value for VERSION - this might not be a good change if Metabase folks want the
+   # build to fail when it's not set.
    ARG VERSION=unknown
    WORKDIR /home/node
 
@@ -22,7 +24,7 @@
 
    # install frontend dependencies
    RUN yarn --frozen-lockfile
-   RUN INTERACTIVE=false CI=true MB_EDITION=$MB_EDITION bin/build.sh :version ${VERSION:}
+   RUN INTERACTIVE=false CI=true MB_EDITION=$MB_EDITION bin/build.sh :version ${VERSION}
 
    ###################
    # STAGE 2: runner
