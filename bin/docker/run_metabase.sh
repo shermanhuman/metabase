@@ -81,7 +81,7 @@ else
     id -u metabase > /dev/null 2>&1
     user_exists=$?
     if [[ $user_exists -ne 0 ]]; then
-        useradd -r -u $MUID -g metabase metabase
+        useradd -m -r -u $MUID -g metabase metabase
     fi
 
     db_file=${MB_DB_FILE:-/metabase.db}
