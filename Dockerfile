@@ -22,37 +22,24 @@
 
    # install frontend dependencies
    RUN yarn --frozen-lockfile
-   RUN INTERACTIVE=false CI=true MB_EDITION=$MB_EDITION bin/build.sh :version ${VERSION:-unknown}
+   RUN INTERACTIVE=false CI=true MB_EDITION=$MB_EDITION bin/build.sh :version ${VERSION:}
 
    ###################
    # STAGE 2: runner
    ###################
    FROM eclipse-temurin:11-jre-jammy AS runner
-   ENV FC_LANG=en-US \
-       LC_CTYPE=en_US.UTF-8 \
-       JAVA_HOME=/opt/java/openjdk
-
-   # Ensure Java is in the PATH
-   ENV PATH="${JAVA_HOME}/bin:${PATH}"
+   ENV FC_LANG en-US LC_CTYPE en_US.UTF-8
 
    # Install dependencies
    RUN apt-get update && \
-       apt-get install -y curl fontconfig && \
-       apt-get clean && \
-       rm -rf /var/lib/apt/lists/*
-
-   # Set up certificates
-   RUN mkdir -p /app/certs && \
-       curl -o /app/certs/rds-combined-ca-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem && \
-       curl -o /app/certs/DigiCertGlobalRootG2.crt.pem https://cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem && \
-       for CACERTS in /etc/ssl/certs/java/cacerts "$JAVA_HOME/lib/security/cacerts"; do \
-         if [ -f "$CACERTS" ]; then \
-           keytool -noprompt -import -trustcacerts -alias aws-rds -file /app/certs/rds-combined-ca-bundle.pem -keystore "$CACERTS" -keypass changeit -storepass changeit; \
-           keytool -noprompt -import -trustcacerts -alias azure-cert -file /app/certs/DigiCertGlobalRootG2.crt.pem -keystore "$CACERTS" -keypass changeit -storepass changeit; \
-           echo "Updated cacerts at $CACERTS"; \
-         fi; \
-       done && \
-       mkdir -p /plugins && chmod a+rwx /plugins
+   apt-get upgrade -y && \
+   apt-get install -y ca-certificates ca-certificates-java fonts-noto && \
+   apt-get clean && \
+   curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /usr/local/share/ca-certificates/rds-combined-ca-bundle.pem && \
+   curl https://cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem -o /usr/local/share/ca-certificates/DigiCertGlobalRootG2.crt.pem && \
+   update-ca-certificates && \
+   mkdir -p /plugins && chmod a+rwx /plugins && \
+   keytool -list -cacerts
 
    # add Metabase script and uberjar
    COPY --from=builder /home/node/target/uberjar/metabase.jar /app/
