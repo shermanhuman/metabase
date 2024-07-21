@@ -73,7 +73,7 @@ else
     getent group metabase > /dev/null 2>&1
     group_exists=$?
     if [ $group_exists -ne 0 ]; then
-        addgroup --gid $MGID --system metabase
+        groupadd -r -g $MGID metabase
     fi
 
     # create the user if it does not exist
@@ -81,7 +81,7 @@ else
     id -u metabase > /dev/null 2>&1
     user_exists=$?
     if [[ $user_exists -ne 0 ]]; then
-        adduser --disabled-password -u $MUID --ingroup metabase metabase
+        useradd -r -u $MUID -g metabase metabase
     fi
 
     db_file=${MB_DB_FILE:-/metabase.db}
@@ -168,5 +168,5 @@ else
     # Launch the application
     # exec is here twice on purpose to  ensure that metabase runs as PID 1 (the init process)
     # and thus receives signals sent to the container. This allows it to shutdown cleanly on exit
-    exec su metabase -s /bin/sh -c "exec java $JAVA_OPTS -jar /app/metabase.jar $@"
+	exec su - metabase -c "exec java $JAVA_OPTS -jar /app/metabase.jar $@"
 fi

@@ -62,4 +62,4 @@
    EXPOSE 3000
 
    # run it
-   ENTRYPOINT ["/app/run_metabase.sh"]
+ENTRYPOINT ["/app/run_metabase.sh"]
